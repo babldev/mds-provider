@@ -58,14 +58,14 @@ class Provider():
 
 def get_registry(ref=DEFAULT_REF, file=None):
     """
-    Parse a Provider registry file; by default, download the official registry from GitHub.
+    Parse a Provider registry file; by default, download the official registry from GitHub `master`.
 
-    By default download from `master`. Optionally download from the specified :ref:, which could be any of:
+    Optionally download from the specified :ref:, which could be any of:
         - git branch name
         - commit hash (long or short)
         - git tag
 
-    Or use the :file: kwarg to skip the download and parse the given local registry file.
+    Or use the :file: kwarg to skip the download and parse a local registry file.
     """
     providers = []
 
