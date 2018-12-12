@@ -5,6 +5,7 @@ MDS Provider API client implementation.
 from datetime import datetime
 import json
 import mds
+import time
 from mds.api.auth import OAuthClientCredentialsAuth
 from mds.providers import get_registry, Provider
 
@@ -50,7 +51,7 @@ class ProviderClient(OAuthClientCredentialsAuth):
 
         return url
 
-    def _request(self, providers, endpoint, params, paging):
+    def _request(self, providers, endpoint, params, paging, padding_seconds):
         """
         Internal helper for sending requests.
 
@@ -121,6 +122,9 @@ class ProviderClient(OAuthClientCredentialsAuth):
                 if __has_data(this_page):
                     results[provider].append(this_page)
                     next_url = __next_url(this_page)
+
+                    if next_url and padding_seconds:
+                        time.sleep(padding_seconds)
                 else:
                     break
 
@@ -139,6 +143,7 @@ class ProviderClient(OAuthClientCredentialsAuth):
         end_time=None,
         bbox=None,
         paging=True,
+        padding_seconds=0,
         **kwargs):
         """
         Request Status Changes data. Returns a dict of provider => list of status_changes payload(s)
@@ -164,6 +169,9 @@ class ProviderClient(OAuthClientCredentialsAuth):
 
             - `paging`: True (default) to follow paging and request all available data.
                         False to request only the first page.
+
+            - `padding_seconds`: 0 (default) delay to insert between requests
+                        to limit load on providers.
         """
         if providers is None:
             providers = self.providers
@@ -181,7 +189,7 @@ class ProviderClient(OAuthClientCredentialsAuth):
         }
 
         # make the request(s)
-        status_changes = self._request(providers, mds.STATUS_CHANGES, params, paging)
+        status_changes = self._request(providers, mds.STATUS_CHANGES, params, paging, padding_seconds)
 
         return status_changes
 
@@ -194,6 +202,7 @@ class ProviderClient(OAuthClientCredentialsAuth):
         end_time=None,
         bbox=None,
         paging=True,
+        padding_seconds=0,
         **kwargs):
         """
         Request Trips data. Returns a dict of provider => list of trips payload(s).
@@ -223,6 +232,9 @@ class ProviderClient(OAuthClientCredentialsAuth):
 
             - `paging`: True (default) to follow paging and request all available data.
                         False to request only the first page.
+
+            - `padding_seconds`: 0 (default) delay to insert between requests
+                        to limit load on providers.
         """
         if providers is None:
             providers = self.providers
@@ -234,12 +246,12 @@ class ProviderClient(OAuthClientCredentialsAuth):
             end_time = self._date_format(end_time)
 
         # gather all the params togethers
-        params = { 
+        params = {
             **dict(device_id=device_id, vehicle_id=vehicle_id, start_time=start_time, end_time=end_time, bbox=bbox),
             **kwargs
         }
 
         # make the request(s)
-        trips = self._request(providers, mds.TRIPS, params, paging)
+        trips = self._request(providers, mds.TRIPS, params, paging, padding_seconds)
 
         return trips
